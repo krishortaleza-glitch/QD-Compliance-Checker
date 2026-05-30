@@ -58,17 +58,46 @@ def build_compliance_report(cost_df, invoice_df):
             qty = 0
             overage = 0
         else:
-            lowest = invoices["price"].min()
-            variance = lowest - row["caseCost"]
-            qty = invoices["quantity"].sum()
-            overage = ((invoices["price"] - row["caseCost"]) * invoices["quantity"]).sum()
-            status = "PASS" if lowest >= row["caseCost"] else "FAIL"
+lowest = invoices["price"].min()
 
-            temp = invoices.copy()
-            temp["ExpectedCost"] = row["caseCost"]
-            temp["Status"] = status
-            temp["RetailProductName"] = row["retailProductName"]
-            evidence.append(temp)
+highest = invoices["price"].max()
+
+variance = (
+    invoices["price"] - row["caseCost"]
+).sum()
+
+qty = invoices["quantity"].sum()
+
+cost_impact = (
+    (
+        invoices["price"]
+        - row["caseCost"]
+    )
+    * invoices["quantity"]
+).sum()
+
+all_match = (
+    invoices["price"]
+    .round(2)
+    .eq(round(row["caseCost"], 2))
+    .all()
+)
+
+status = (
+    "PASS"
+    if all_match
+    else "FAIL"
+)
+
+temp = invoices.copy()
+
+temp["ExpectedCost"] = row["caseCost"]
+
+temp["Status"] = status
+
+temp["RetailProductName"] = row["retailProductName"]
+
+evidence.append(temp)
 
         results.append({
             "StoreID": row["StoreID"],
